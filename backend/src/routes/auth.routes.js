@@ -15,5 +15,11 @@ router.post(
   ],
   controller.registerTenant
 );
+router.post('/login', controller.login);
+const auth = require('../middleware/auth.middleware');
+
+router.get('/me', auth, controller.me);
+router.post('/logout', auth, controller.logout);
+
 
 module.exports = router;

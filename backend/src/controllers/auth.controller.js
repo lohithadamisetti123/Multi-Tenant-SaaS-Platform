@@ -48,3 +48,117 @@ exports.registerTenant = async (req, res, next) => {
     client.release();
   }
 };
+const jwtUtil = require('../config/jwt');
+
+exports.login = async (req, res, next) => {
+  const { email, password, tenantSubdomain } = req.body;
+
+  try {
+    const tenantResult = await pool.query(
+      `SELECT * FROM tenants WHERE subdomain = $1`,
+      [tenantSubdomain]
+    );
+
+    if (tenantResult.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Tenant not found' });
+    }
+
+    const tenant = tenantResult.rows[0];
+
+    if (tenant.status !== 'active') {
+      return res.status(403).json({ success: false, message: 'Tenant inactive' });
+    }
+
+    const userResult = await pool.query(
+      `SELECT * FROM users WHERE email = $1 AND tenant_id = $2`,
+      [email, tenant.id]
+    );
+
+    if (userResult.rowCount === 0) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    const user = userResult.rows[0];
+
+    if (!user.is_active) {
+      return res.status(403).json({ success: false, message: 'User inactive' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    const token = jwtUtil.generateToken({
+      userId: user.id,
+      tenantId: tenant.id,
+      role: user.role,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.full_name,
+          role: user.role,
+          tenantId: tenant.id,
+        },
+        token,
+        expiresIn: 86400,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+exports.me = async (req, res, next) => {
+  try {
+    const { userId, tenantId } = req.user;
+
+    const result = await pool.query(
+      `SELECT 
+        u.id, u.email, u.full_name, u.role, u.is_active,
+        t.id AS tenant_id, t.name, t.subdomain, t.subscription_plan,
+        t.max_users, t.max_projects
+       FROM users u
+       JOIN tenants t ON u.tenant_id = t.id
+       WHERE u.id = $1 AND t.id = $2`,
+      [userId, tenantId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const row = result.rows[0];
+
+    res.json({
+      success: true,
+      data: {
+        id: row.id,
+        email: row.email,
+        fullName: row.full_name,
+        role: row.role,
+        isActive: row.is_active,
+        tenant: {
+          id: row.tenant_id,
+          name: row.name,
+          subdomain: row.subdomain,
+          subscriptionPlan: row.subscription_plan,
+          maxUsers: row.max_users,
+          maxProjects: row.max_projects,
+        },
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+exports.logout = async (req, res) => {
+  res.json({
+    success: true,
+    message: 'Logged out successfully',
+  });
+};
