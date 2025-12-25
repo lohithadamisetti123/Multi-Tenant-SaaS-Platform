@@ -19,5 +19,6 @@ app.use('/api/tenants', tenantRoutes);
 const userRoutes = require('./routes/user.routes');
 app.use('/api', userRoutes);
 
+app.use("/api/projects", require("./routes/project.routes"));
 
 module.exports = app;
