@@ -12,4 +12,12 @@ app.use('/api/auth', authRoutes);
 
 app.use(errorMiddleware);
 
+const tenantRoutes = require('./routes/tenant.routes');
+
+app.use('/api/tenants', tenantRoutes);
+
+const userRoutes = require('./routes/user.routes');
+app.use('/api', userRoutes);
+
+
 module.exports = app;
