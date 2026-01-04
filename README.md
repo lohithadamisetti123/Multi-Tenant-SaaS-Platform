@@ -13,7 +13,7 @@ This project is a full-stack Software-as-a-Service application that allows multi
 ## 🎥 Application Demo
 
 📌 **Complete walkthrough & system explanation**
-👉 [https://youtu.be/h9bwxlI3I4I](https://youtu.be/h9bwxlI3I4I)
+👉 [https://youtu.be/-oXW5ZNMC1A?si=oAf_JouRQUDWPw9Y](https://youtu.be/-oXW5ZNMC1A?si=oAf_JouRQUDWPw9Y)
 
 ---
 
