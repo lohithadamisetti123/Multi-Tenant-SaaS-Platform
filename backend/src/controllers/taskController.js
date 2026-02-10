@@ -125,32 +125,6 @@ exports.getTasks = async (req, res) => {
 
 exports.updateTaskStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
-    const task = await Task.findOne({ where: { id, tenantId: req.user.tenantId } });
-    
-    if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
-    
-    task.status = status;
-    await task.save();
-
-    await AuditLog.create({
-      action: 'UPDATE_TASK_STATUS',
-      entityType: 'Task',
-      entityId: task.id,
-      tenantId: req.user.tenantId,
-      userId: req.user.id,
-      details: { status }
-    });
-
-    res.json({ success: true, data: task });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-exports.updateTaskStatus = async (req, res) => {
-  try {
     const { status } = req.body;
     
     if (!status) {
