@@ -84,7 +84,7 @@ exports.getProjects = async (req, res) => {
 exports.getProject = async (req, res) => {
   try {
     const project = await Project.findOne({
-      where: { id: req.params.id, tenantId: req.user.tenantId },
+      where: { id: req.params.projectId, tenantId: req.user.tenantId },
       include: [
         { model: User, as: 'creator', attributes: ['id', 'fullName'] }
       ]
@@ -99,7 +99,7 @@ exports.getProject = async (req, res) => {
 exports.updateProject = async (req, res) => {
   try {
     const { name, description, status } = req.body;
-    const project = await Project.findOne({ where: { id: req.params.id, tenantId: req.user.tenantId }});
+    const project = await Project.findOne({ where: { id: req.params.projectId, tenantId: req.user.tenantId }});
 
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
 
@@ -122,7 +122,7 @@ exports.updateProject = async (req, res) => {
 exports.deleteProject = async (req, res) => {
   try {
     const project = await Project.findOne({ 
-      where: { id: req.params.id, tenantId: req.user.tenantId } 
+      where: { id: req.params.projectId, tenantId: req.user.tenantId } 
     });
 
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
@@ -132,7 +132,7 @@ exports.deleteProject = async (req, res) => {
     await AuditLog.create({
       action: 'DELETE_PROJECT',
       entityType: 'Project',
-      entityId: req.params.id,
+      entityId: req.params.projectId,
       tenantId: req.user.tenantId,
       userId: req.user.id
     });

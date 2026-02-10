@@ -2,7 +2,9 @@ const { Task, Project, AuditLog } = require('../models');
 
 exports.createTask = async (req, res) => {
   try {
-    const { title, description, projectId, assignedTo, priority, dueDate } = req.body;
+    // Support both body and params for projectId (nested route: /projects/:projectId/tasks)
+    const projectId = req.params.projectId || req.body.projectId;
+    const { title, description, assignedTo, priority, dueDate } = req.body;
     
     // Validation
     if (!title || !projectId) {
@@ -61,7 +63,9 @@ exports.createTask = async (req, res) => {
 
 exports.getTasks = async (req, res) => {
   try {
-    const { projectId, status, assignedTo, priority, search, page = 1, limit = 50 } = req.query;
+    // Support both query and params for projectId (nested route: /projects/:projectId/tasks)
+    const projectId = req.params.projectId || req.query.projectId;
+    const { status, assignedTo, priority, search, page = 1, limit = 50 } = req.query;
     const offset = (page - 1) * limit;
 
     // Verify project belongs to tenant if specified
