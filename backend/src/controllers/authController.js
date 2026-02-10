@@ -2,11 +2,13 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { User, Tenant, sequelize, AuditLog } = require('../models');
 
-// Helper to generate JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'secret', {
-    expiresIn: '30d',
-  });
+// Helper to generate JWT with required payload
+const generateToken = (user) => {
+  return jwt.sign(
+    { userId: user.id, tenantId: user.tenantId, role: user.role }, 
+    process.env.JWT_SECRET || 'secret',
+    { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+  );
 };
 
 exports.registerTenant = async (req, res) => {
@@ -34,7 +36,7 @@ exports.registerTenant = async (req, res) => {
     const admin = await User.create({
       fullName: adminFullName,
       email: adminEmail,
-      password: hashedPassword,
+      password_hash: hashedPassword,
       role: 'tenant_admin',
       tenantId: tenant.id
     }, { transaction });
@@ -53,7 +55,16 @@ exports.registerTenant = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Tenant registered successfully',
-      data: { tenant, admin }
+      data: {
+        tenantId: tenant.id,
+        subdomain: tenant.subdomain,
+        adminUser: {
+          id: admin.id,
+          email: admin.email,
+          fullName: admin.fullName,
+          role: admin.role
+        }
+      }
     });
   } catch (error) {
     if (transaction) await transaction.rollback();
@@ -82,19 +93,24 @@ exports.register = async (req, res) => {
     const user = await User.create({
       fullName,
       email,
-      password: hashedPassword,
+      password_hash: hashedPassword,
       tenantId: tenant.id,
       role: 'user'
     });
 
+    const token = generateToken(user);
     res.status(201).json({
       success: true,
       data: {
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user.id)
+        user: {
+          id: user.id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+          tenantId: user.tenantId
+        },
+        token,
+        expiresIn: 86400
       }
     });
   } catch (error) {
@@ -114,12 +130,12 @@ exports.login = async (req, res) => {
     // 1. Find User by Email (Global Lookup first to check role)
     const user = await User.findOne({ 
       where: { email },
-      attributes: ['id', 'fullName', 'email', 'password', 'role', 'tenantId'],
+      attributes: ['id', 'fullName', 'email', 'password_hash', 'role', 'tenantId'],
       include: [{ model: Tenant, as: 'tenant' }] 
     });
 
     // 2. Generic Invalid Credentials (Security: Don't reveal if user exists)
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       // Log failure (Optional)
       if (user) {
          await AuditLog.create({
@@ -170,15 +186,19 @@ exports.login = async (req, res) => {
       ipAddress: req.ip
     });
 
+    const token = generateToken(user);
     res.json({
       success: true,
       data: {
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        tenant: user.tenant,
-        token: generateToken(user.id)
+        user: {
+          id: user.id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+          tenantId: user.tenantId
+        },
+        token,
+        expiresIn: 86400
       }
     });
 
@@ -209,7 +229,7 @@ exports.logout = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ['password'] },
+      attributes: { exclude: ['password_hash'] },
       include: [{ model: Tenant, as: 'tenant' }]
     });
     res.json({ success: true, data: user });
