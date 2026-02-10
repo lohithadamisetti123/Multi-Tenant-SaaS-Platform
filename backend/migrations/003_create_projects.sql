@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS "projects" (
     "description" TEXT,
     "status" "enum_projects_status" DEFAULT 'active',
     "tenantId" UUID NOT NULL REFERENCES "tenants" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    "createdById" UUID NOT NULL REFERENCES "users" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    "createdById" UUID NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
