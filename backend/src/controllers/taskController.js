@@ -149,6 +149,45 @@ exports.updateTaskStatus = async (req, res) => {
   }
 };
 
+exports.updateTaskStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ success: false, message: 'status is required' });
+    }
+
+    const task = await Task.findOne({ 
+      where: { id: req.params.id, tenantId: req.user.tenantId }
+    });
+
+    if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+
+    await task.update({ status });
+
+    await AuditLog.create({
+      action: 'UPDATE_TASK',
+      entityType: 'Task',
+      entityId: task.id,
+      tenantId: req.user.tenantId,
+      userId: req.user.id,
+      details: { field: 'status', newValue: status }
+    });
+
+    // Reload with associations
+    await task.reload({ include: [{ model: require('../models').User, as: 'assignee' }] });
+
+    const taskData = task.toJSON();
+    if (task.assignee) {
+      taskData.assignedTo = task.assignee;
+    }
+
+    res.json({ success: true, message: 'Task status updated successfully', data: taskData });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 exports.updateTask = async (req, res) => {
   try {
     const { title, description, status, priority, assignedTo, dueDate } = req.body;
