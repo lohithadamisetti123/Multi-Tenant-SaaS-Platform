@@ -36,14 +36,46 @@ exports.createProject = async (req, res) => {
 
 exports.getProjects = async (req, res) => {
   try {
-    const projects = await Project.findAll({
-      where: { tenantId: req.user.tenantId },
+    const { status, search, page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+    
+    // Build where clause
+    const whereClause = { tenantId: req.user.tenantId };
+    if (status) whereClause.status = status;
+    if (search) {
+      whereClause.name = { [require('sequelize').Op.iLike]: `%${search}%` };
+    }
+
+    const { count, rows } = await Project.findAndCountAll({
+      where: whereClause,
       include: [
-        { model: User, as: 'creator', attributes: ['id', 'fullName'] }
+        { model: require('../models').User, as: 'creator', attributes: ['id', 'fullName'] },
+        { model: require('../models').Task, as: 'tasks' }
       ],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
       order: [['createdAt', 'DESC']]
     });
-    res.json({ success: true, data: projects });
+
+    // Count completed tasks for each project
+    const projects = rows.map(p => ({
+      ...p.toJSON(),
+      taskCount: p.tasks.length,
+      completedTaskCount: p.tasks.filter(t => t.status === 'completed').length
+    }));
+
+    res.json({ 
+      success: true, 
+      data: {
+        projects,
+        total: count,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(count / limit),
+          limit: parseInt(limit)
+        }
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
