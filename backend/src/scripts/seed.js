@@ -26,7 +26,7 @@ const seed = async () => {
       where: { email: 'superadmin@system.com' },
       defaults: {
         fullName: 'System Super Admin',
-        password: superAdminPass,
+        password_hash: superAdminPass,
         role: 'super_admin',
         tenantId: null 
       }
@@ -39,7 +39,7 @@ const seed = async () => {
       where: { email: 'admin@demo.com', tenantId: tenant.id },
       defaults: {
         fullName: 'Demo Admin',
-        password: adminPass,
+        password_hash: adminPass,
         role: 'tenant_admin'
       }
     });
@@ -50,12 +50,12 @@ const seed = async () => {
     
     await User.findOrCreate({
       where: { email: 'user1@demo.com', tenantId: tenant.id },
-      defaults: { fullName: 'Demo User 1', password: userPass, role: 'user' }
+      defaults: { fullName: 'Demo User 1', password_hash: userPass, role: 'user' }
     });
 
     await User.findOrCreate({
       where: { email: 'user2@demo.com', tenantId: tenant.id },
-      defaults: { fullName: 'Demo User 2', password: userPass, role: 'user' }
+      defaults: { fullName: 'Demo User 2', password_hash: userPass, role: 'user' }
     });
     console.log('✅ Regular Users Created');
 

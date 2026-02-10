@@ -58,9 +58,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Browser runs on host, so localhost:5000 is usually fine for client-side fetches,
-      # BUT if doing SSR, use http://backend:5000
-      REACT_APP_API_URL: http://localhost:5000/api
+      # In Docker, frontend should talk to backend by service name
+      REACT_APP_API_URL: http://backend:5000/api
     depends_on:
       backend:
         condition: service_healthy
