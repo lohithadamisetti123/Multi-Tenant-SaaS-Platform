@@ -9,7 +9,23 @@ exports.getTenant = async (req, res) => {
     const tenant = await Tenant.findByPk(req.params.id);
     if (!tenant) return res.status(404).json({ success: false, message: 'Tenant not found' });
 
-    res.json({ success: true, data: tenant });
+    // Calculate stats
+    const { User, Project, Task } = require('../models');
+    const totalUsers = await User.count({ where: { tenantId: req.params.id } });
+    const totalProjects = await Project.count({ where: { tenantId: req.params.id } });
+    const totalTasks = await Task.count({ where: { tenantId: req.params.id } });
+
+    res.json({ 
+      success: true, 
+      data: {
+        ...tenant.toJSON(),
+        stats: {
+          totalUsers,
+          totalProjects,
+          totalTasks
+        }
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
