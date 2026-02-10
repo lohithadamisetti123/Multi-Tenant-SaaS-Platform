@@ -15,7 +15,7 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  password: {
+  password_hash: {
     type: DataTypes.STRING,
     allowNull: false
   },
@@ -26,6 +26,10 @@ const User = sequelize.define('User', {
   tenantId: {
     type: DataTypes.UUID,
     allowNull: true
+  },
+  is_active: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
 }, {
   timestamps: true,
