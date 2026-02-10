@@ -18,7 +18,7 @@ exports.protect = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
 
-    const user = await User.findByPk(decoded.id, {
+    const user = await User.findByPk(decoded.userId, {
       include: [{ model: Tenant, as: 'tenant' }]
     });
 
