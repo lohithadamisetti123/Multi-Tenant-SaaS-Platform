@@ -18,8 +18,18 @@ const app = express();
 
 // Middleware
 app.use(helmet());
+// Configure CORS to allow both the Docker-internal frontend hostname
+// (e.g. http://frontend:3000) and the host machine during local dev
+// (http://localhost:3000). This accepts either value from the
+// FRONTEND_URL env var and always allows localhost for developer testing.
+const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000'].filter(Boolean);
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // If no origin (server-to-server requests, curl, etc.) allow it
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('CORS policy: origin not allowed'));
+  },
   credentials: true
 }));
 app.use(express.json());
