@@ -45,9 +45,10 @@ export default function Dashboard() {
 
         // Fetch Tenant Stats
         // We need the tenant ID. 'user' object from localStorage has it.
-        if (user && user.tenantId) {
+        const tenantId = user.tenantId || (user.tenant && user.tenant.id);
+        if (user && tenantId) {
           try {
-            const tenantRes = await api.get(`/tenants/${user.tenantId}`);
+            const tenantRes = await api.get(`/tenants/${tenantId}`);
             const stats = tenantRes.data.data.stats;
             setStats({
               activeProjects: stats.totalProjects, // Or use projects.length if we want client-side count

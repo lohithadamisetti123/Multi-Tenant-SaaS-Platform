@@ -23,9 +23,9 @@ exports.registerTenant = async (req, res) => {
     const tenant = await Tenant.create({
       name: tenantName,
       subdomain,
-      subscriptionPlan: 'free',
-      maxUsers: 5,
-      maxProjects: 3
+      subscriptionPlan: 'pro',
+      maxUsers: 10,
+      maxProjects: 10
     }, { transaction });
 
     const salt = await bcrypt.genSalt(10);
@@ -189,6 +189,7 @@ exports.login = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
+        tenantId: user.tenantId,
         tenant: user.tenant,
         token: generateToken(user.id)
       }
