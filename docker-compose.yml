@@ -60,6 +60,8 @@ services:
     environment:
       # In Docker, frontend should talk to backend by service name
       REACT_APP_API_URL: http://backend:5000/api
+      # Vite expects VITE_API_URL (frontend reads import.meta.env.VITE_API_URL)
+      VITE_API_URL: http://backend:5000/api
     depends_on:
       backend:
         condition: service_healthy
