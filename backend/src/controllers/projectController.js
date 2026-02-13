@@ -2,17 +2,29 @@ const { Project, Task, User, Tenant, AuditLog } = require('../models');
 
 exports.createProject = async (req, res) => {
   try {
+    if (!req.user.tenantId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current user is not associated with any workspace/tenant. Please login as a tenant user to create projects.'
+      });
+    }
+
     const tenant = await Tenant.findByPk(req.user.tenantId);
+    if (!tenant) {
+      return res.status(404).json({ success: false, message: 'Tenant not found associated with user' });
+    }
+
     const projectCount = await Project.count({ where: { tenantId: req.user.tenantId } });
 
     if (projectCount >= tenant.maxProjects) {
-      return res.status(403).json({ 
-        success: false, 
-        message: `Project limit reached for plan (${tenant.maxProjects} max)` 
+      return res.status(403).json({
+        success: false,
+        message: `Project limit reached for plan (${tenant.maxProjects} max)`
       });
     }
 
     const { name, description } = req.body;
+
     const project = await Project.create({
       name,
       description,
@@ -67,7 +79,7 @@ exports.getProject = async (req, res) => {
 exports.updateProject = async (req, res) => {
   try {
     const { name, description, status } = req.body;
-    const project = await Project.findOne({ where: { id: req.params.id, tenantId: req.user.tenantId }});
+    const project = await Project.findOne({ where: { id: req.params.id, tenantId: req.user.tenantId } });
 
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
 
@@ -89,8 +101,8 @@ exports.updateProject = async (req, res) => {
 
 exports.deleteProject = async (req, res) => {
   try {
-    const project = await Project.findOne({ 
-      where: { id: req.params.id, tenantId: req.user.tenantId } 
+    const project = await Project.findOne({
+      where: { id: req.params.id, tenantId: req.user.tenantId }
     });
 
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
