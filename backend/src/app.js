@@ -18,18 +18,12 @@ const app = express();
 
 // Middleware
 app.use(helmet());
-// Configure CORS to allow both the Docker-internal frontend hostname
-// (e.g. http://frontend:3000) and the host machine during local dev
-// (http://localhost:3000). This accepts either value from the
-// FRONTEND_URL env var and always allows localhost for developer testing.
-const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000'].filter(Boolean);
 app.use(cors({
-  origin: (origin, callback) => {
-    // If no origin (server-to-server requests, curl, etc.) allow it
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('CORS policy: origin not allowed'));
-  },
+  origin: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
   credentials: true
 }));
 app.use(express.json());
@@ -45,10 +39,10 @@ app.get('/api/health', async (req, res) => {
   } catch (error) {
     console.error('Health Check Failed:', error);
     // Return 503 Service Unavailable if DB is down
-    res.status(503).json({ 
-      status: 'error', 
-      database: 'disconnected', 
-      error: error.message 
+    res.status(503).json({
+      status: 'error',
+      database: 'disconnected',
+      error: error.message
     });
   }
 });

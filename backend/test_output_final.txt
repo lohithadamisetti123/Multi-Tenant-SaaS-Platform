@@ -1,0 +1,86 @@
+--- STARTING API TESTS (Dependency-Free) ---
+
+1. Register Tenant...
+📡 Request: POST http://localhost:5000/api/auth/register-tenant
+✅ Success: Tenant registered successfully
+
+2. Login...
+📡 Request: POST http://localhost:5000/api/auth/login
+✅ Success
+
+3. Get Me...
+📡 Request: GET http://localhost:5000/api/auth/me
+💥 Fetch Error: No user found with this id
+❌ Failed Step 3: No user found with this id
+
+4. Get Tenant Details...
+📡 Request: GET http://localhost:5000/api/tenants/68004031-5c53-4fe5-a05e-f1c66343c709
+💥 Fetch Error: No user found with this id
+❌ Failed Step 4: No user found with this id
+
+5. Update Tenant...
+📡 Request: PUT http://localhost:5000/api/tenants/68004031-5c53-4fe5-a05e-f1c66343c709
+💥 Fetch Error: No user found with this id
+❌ Failed Step 5: No user found with this id
+
+6. Create User...
+📡 Request: POST http://localhost:5000/api/tenants/68004031-5c53-4fe5-a05e-f1c66343c709/users
+💥 Fetch Error: No user found with this id
+❌ Failed Step 6: No user found with this id
+
+7. List Users...
+📡 Request: GET http://localhost:5000/api/tenants/68004031-5c53-4fe5-a05e-f1c66343c709/users
+💥 Fetch Error: No user found with this id
+❌ Failed Step 7: No user found with this id
+
+8. Create Project...
+📡 Request: POST http://localhost:5000/api/projects
+💥 Fetch Error: No user found with this id
+❌ Failed Step 8: No user found with this id
+
+9. List Projects...
+📡 Request: GET http://localhost:5000/api/projects
+💥 Fetch Error: No user found with this id
+❌ Failed Step 9: No user found with this id
+
+10. Update Project...
+📡 Request: PUT http://localhost:5000/api/projects/
+💥 Fetch Error: No user found with this id
+❌ Failed Step 10: No user found with this id
+
+11. Create Task...
+📡 Request: POST http://localhost:5000/api/tasks
+💥 Fetch Error: No user found with this id
+❌ Failed Step 11: No user found with this id
+
+12. List Tasks...
+📡 Request: GET http://localhost:5000/api/tasks?projectId=
+💥 Fetch Error: No user found with this id
+❌ Failed Step 12: No user found with this id
+
+13. Update Task Status...
+📡 Request: PATCH http://localhost:5000/api/tasks/
+💥 Fetch Error: No user found with this id
+❌ Failed Step 13: No user found with this id
+
+14. Update Task...
+📡 Request: PUT http://localhost:5000/api/tasks/
+💥 Fetch Error: No user found with this id
+❌ Failed Step 14: No user found with this id
+
+15. Delete Task...
+📡 Request: DELETE http://localhost:5000/api/tasks/
+💥 Fetch Error: No user found with this id
+❌ Failed Step 15: No user found with this id
+
+16. Delete Project...
+📡 Request: DELETE http://localhost:5000/api/projects/
+💥 Fetch Error: No user found with this id
+❌ Failed Step 16: No user found with this id
+
+17. Logout...
+📡 Request: POST http://localhost:5000/api/auth/logout
+💥 Fetch Error: No user found with this id
+❌ Failed Step 17: No user found with this id
+
+--- TESTS COMPLETED ---

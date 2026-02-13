@@ -2,8 +2,8 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# INSTALL CURL HERE
-RUN apk add --no-cache curl
+# INSTALL CURL and NETCAT HERE
+RUN apk add --no-cache curl netcat-openbsd
 
 COPY package*.json ./
 RUN npm install

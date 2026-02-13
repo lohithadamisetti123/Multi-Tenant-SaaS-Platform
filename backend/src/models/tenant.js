@@ -22,18 +22,22 @@ const Tenant = sequelize.define('Tenant', {
   },
   subscriptionPlan: {
     type: DataTypes.ENUM('free', 'pro', 'enterprise'),
-    defaultValue: 'free'
+    defaultValue: 'free',
+    field: 'subscription_plan'
   },
   maxUsers: {
     type: DataTypes.INTEGER,
-    defaultValue: 5
+    defaultValue: 5,
+    field: 'max_users'
   },
   maxProjects: {
     type: DataTypes.INTEGER,
-    defaultValue: 3
+    defaultValue: 3,
+    field: 'max_projects'
   }
 }, {
   timestamps: true,
+  underscored: true,
   tableName: 'tenants'
 });
 

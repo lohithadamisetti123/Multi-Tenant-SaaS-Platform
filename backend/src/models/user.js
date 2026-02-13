@@ -9,15 +9,17 @@ const User = sequelize.define('User', {
   },
   fullName: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    field: 'full_name'
   },
   email: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  password_hash: {
+  password: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    field: 'password_hash'
   },
   role: {
     type: DataTypes.ENUM('super_admin', 'tenant_admin', 'user'),
@@ -25,19 +27,25 @@ const User = sequelize.define('User', {
   },
   tenantId: {
     type: DataTypes.UUID,
-    allowNull: true
+    allowNull: true,
+    field: 'tenant_id'
   },
-  is_active: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true
+  status: {
+    type: DataTypes.ENUM('active', 'inactive', 'suspended'),
+    defaultValue: 'active'
+  },
+  lastLogin: {
+    type: DataTypes.DATE,
+    field: 'last_login'
   }
 }, {
   timestamps: true,
+  underscored: true,
   tableName: 'users',
   indexes: [
     {
       unique: true,
-      fields: ['email', 'tenantId']
+      fields: ['email', 'tenant_id']
     }
   ]
 });

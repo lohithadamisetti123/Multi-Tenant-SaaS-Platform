@@ -1,0 +1,37 @@
+--- STARTING API TESTS (Dependency-Free) ---
+
+1. Register Tenant...
+📡 Request: POST http://localhost:5000/api/auth/register-tenant
+✅ Success: Tenant registered successfully
+Debug Response: {
+  "success": true,
+  "message": "Tenant registered successfully",
+  "data": {
+    "tenant": {
+      "id": "f358b28d-4ea8-4e47-a38a-dbfb812cadc1",
+      "status": "active",
+      "name": "AutoTest Tenant",
+      "subdomain": "test1770970085303",
+      "subscriptionPlan": "free",
+      "maxUsers": 5,
+      "maxProjects": 3,
+      "updatedAt": "2026-02-13T08:08:05.431Z",
+      "createdAt": "2026-02-13T08:08:05.431Z"
+    },
+    "admin": {
+      "id": "e5218e7e-5f4e-4981-a69e-00288a977390",
+      "fullName": "Test Admin",
+      "email": "admin1770970085303@test.com",
+      "password": "$2b$10$hm3xI/ot5c6vsveA1MM1vOeLYRy/qcalr66x65ow2aAheZLJiidVS",
+      "role": "tenant_admin",
+      "tenantId": "f358b28d-4ea8-4e47-a38a-dbfb812cadc1",
+      "updatedAt": "2026-02-13T08:08:05.569Z",
+      "createdAt": "2026-02-13T08:08:05.569Z"
+    }
+  }
+}
+
+2. Login...
+📡 Request: POST http://localhost:5000/api/auth/login
+✅ Success
+❌ Failed Step 2: Cannot read properties of undefined (reading 'id')

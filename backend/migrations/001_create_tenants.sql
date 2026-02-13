@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS "tenants" (
     "name" VARCHAR(255) NOT NULL,
     "subdomain" VARCHAR(255) NOT NULL UNIQUE,
     "status" "enum_tenants_status" DEFAULT 'active',
-    "subscriptionPlan" "enum_tenants_subscriptionPlan" DEFAULT 'free',
-    "maxUsers" INTEGER DEFAULT 5,
-    "maxProjects" INTEGER DEFAULT 3,
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    "subscription_plan" "enum_tenants_subscriptionPlan" DEFAULT 'free',
+    "max_users" INTEGER DEFAULT 5,
+    "max_projects" INTEGER DEFAULT 3,
+    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

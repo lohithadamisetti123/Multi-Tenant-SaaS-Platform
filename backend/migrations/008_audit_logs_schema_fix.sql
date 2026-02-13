@@ -1,0 +1,3 @@
+ALTER TABLE "audit_logs" 
+ADD COLUMN IF NOT EXISTS "details" JSONB,
+ADD COLUMN IF NOT EXISTS "ip_address" VARCHAR(255);

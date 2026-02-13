@@ -13,11 +13,13 @@ const AuditLog = sequelize.define('AuditLog', {
   },
   entityType: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    field: 'entity_type'
   },
   entityId: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
+    field: 'entity_id'
   },
   details: {
     type: DataTypes.JSONB,
@@ -25,18 +27,22 @@ const AuditLog = sequelize.define('AuditLog', {
   },
   ipAddress: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
+    field: 'ip_address'
   },
   tenantId: {
     type: DataTypes.UUID,
-    allowNull: true
+    allowNull: true,
+    field: 'tenant_id'
   },
   userId: {
     type: DataTypes.UUID,
-    allowNull: true
+    allowNull: true,
+    field: 'user_id'
   }
 }, {
   timestamps: true,
+  underscored: true,
   tableName: 'audit_logs'
 });
 

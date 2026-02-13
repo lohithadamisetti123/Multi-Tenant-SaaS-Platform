@@ -12,36 +12,28 @@ const Task = sequelize.define('Task', {
     allowNull: false
   },
   status: {
-    type: DataTypes.ENUM('todo', 'in_progress', 'completed'),
+    type: DataTypes.ENUM('todo', 'in_progress', 'done'),
     defaultValue: 'todo'
   },
   projectId: {
     type: DataTypes.UUID,
-    allowNull: false
+    allowNull: false,
+    field: 'project_id'
   },
   tenantId: {
     type: DataTypes.UUID,
-    allowNull: false
+    allowNull: false,
+    field: 'tenant_id'
   },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
-  priority: {
-    type: DataTypes.ENUM('low', 'medium', 'high'),
-    defaultValue: 'medium'
-  },
-  // Assigned user (nullable)
+  // FIX: Added assignedTo field
   assignedTo: {
     type: DataTypes.UUID,
-    allowNull: true
-  },
-  dueDate: {
-    type: DataTypes.DATE,
-    allowNull: true
+    allowNull: true,
+    field: 'assigned_to'
   }
 }, {
   timestamps: true,
+  underscored: true,
   tableName: 'tasks'
 });
 

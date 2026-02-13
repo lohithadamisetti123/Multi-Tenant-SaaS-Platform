@@ -2,13 +2,11 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { User, Tenant, sequelize, AuditLog } = require('../models');
 
-// Helper to generate JWT with required payload
-const generateToken = (user) => {
-  return jwt.sign(
-    { userId: user.id, tenantId: user.tenantId, role: user.role }, 
-    process.env.JWT_SECRET || 'secret',
-    { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
-  );
+// Helper to generate JWT
+const generateToken = (id) => {
+  return jwt.sign({ userId: id }, process.env.JWT_SECRET || 'secret', {
+    expiresIn: '30d',
+  });
 };
 
 exports.registerTenant = async (req, res) => {
@@ -36,7 +34,7 @@ exports.registerTenant = async (req, res) => {
     const admin = await User.create({
       fullName: adminFullName,
       email: adminEmail,
-      password_hash: hashedPassword,
+      password: hashedPassword,
       role: 'tenant_admin',
       tenantId: tenant.id
     }, { transaction });
@@ -55,19 +53,13 @@ exports.registerTenant = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Tenant registered successfully',
-      data: {
-        tenantId: tenant.id,
-        subdomain: tenant.subdomain,
-        adminUser: {
-          id: admin.id,
-          email: admin.email,
-          fullName: admin.fullName,
-          role: admin.role
-        }
-      }
+      data: { tenant, admin }
     });
   } catch (error) {
-    if (transaction) await transaction.rollback();
+    if (transaction && !transaction.finished) {
+      try { await transaction.rollback(); } catch (e) { console.error('Rollback failed:', e); }
+    }
+    console.error('Register Tenant Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -93,24 +85,19 @@ exports.register = async (req, res) => {
     const user = await User.create({
       fullName,
       email,
-      password_hash: hashedPassword,
+      password: hashedPassword,
       tenantId: tenant.id,
       role: 'user'
     });
 
-    const token = generateToken(user);
     res.status(201).json({
       success: true,
       data: {
-        user: {
-          id: user.id,
-          fullName: user.fullName,
-          email: user.email,
-          role: user.role,
-          tenantId: user.tenantId
-        },
-        token,
-        expiresIn: 86400
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        token: generateToken(user.id)
       }
     });
   } catch (error) {
@@ -128,53 +115,62 @@ exports.login = async (req, res) => {
     }
 
     // 1. Find User by Email (Global Lookup first to check role)
-    const user = await User.findOne({ 
+    const user = await User.findOne({
       where: { email },
-      attributes: ['id', 'fullName', 'email', 'password_hash', 'role', 'tenantId'],
-      include: [{ model: Tenant, as: 'tenant' }] 
+      attributes: ['id', 'fullName', 'email', 'password', 'role', 'tenantId', 'status', 'lastLogin'],
+      include: [{ model: Tenant, as: 'tenant' }]
     });
 
     // 2. Generic Invalid Credentials (Security: Don't reveal if user exists)
-    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       // Log failure (Optional)
       if (user) {
-         await AuditLog.create({
-            action: 'LOGIN_FAILED',
-            entityType: 'User',
-            entityId: user.id,
-            details: { reason: 'Invalid password' }
-         });
+        await AuditLog.create({
+          action: 'LOGIN_FAILED',
+          entityType: 'User',
+          entityId: user.id,
+          details: { reason: 'Invalid password' }
+        });
       }
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
     // 3. Tenant Logic
     if (user.role === 'super_admin') {
-        // ✅ SUPER ADMIN BYPASS: Allow login regardless of subdomain
-        // (They are global admins, so we ignore the tenant check)
+      // ✅ SUPER ADMIN BYPASS: Allow login regardless of subdomain
+      // (They are global admins, so we ignore the tenant check)
     } else {
-        // 🛑 REGULAR USER ENFORCEMENT
-        // Must provide subdomain
-        if (!tenantSubdomain) {
-            return res.status(401).json({ success: false, message: 'Workspace subdomain required' });
-        }
+      // 🛑 REGULAR USER ENFORCEMENT
+      // Must provide subdomain
+      if (!tenantSubdomain) {
+        return res.status(401).json({ success: false, message: 'Workspace subdomain required' });
+      }
 
-        // Find the requested tenant
-        const requestTenant = await Tenant.findOne({ where: { subdomain: tenantSubdomain } });
-        if (!requestTenant) {
-            return res.status(404).json({ success: false, message: 'Workspace not found' });
-        }
+      // Find the requested tenant
+      const requestTenant = await Tenant.findOne({ where: { subdomain: tenantSubdomain } });
+      if (!requestTenant) {
+        return res.status(404).json({ success: false, message: 'Workspace not found' });
+      }
 
-        // User MUST belong to this tenant
-        if (user.tenantId !== requestTenant.id) {
-             return res.status(401).json({ success: false, message: 'User does not belong to this workspace' });
-        }
+      // User MUST belong to this tenant
+      if (user.tenantId !== requestTenant.id) {
+        return res.status(401).json({ success: false, message: 'User does not belong to this workspace' });
+      }
 
-        // Check suspended status
-        if (requestTenant.status === 'suspended') {
-            return res.status(403).json({ success: false, message: 'Tenant is suspended' });
-        }
+      // Check suspended status
+      if (requestTenant.status === 'suspended') {
+        return res.status(403).json({ success: false, message: 'Tenant is suspended' });
+      }
+
+      // Check User Status
+      if (user.status !== 'active') {
+        return res.status(403).json({ success: false, message: 'User account is not active' });
+      }
     }
+
+    // Update Last Login
+    user.lastLogin = new Date();
+    await user.save();
 
     // 4. Success - Log and Return Token
     await AuditLog.create({
@@ -186,19 +182,15 @@ exports.login = async (req, res) => {
       ipAddress: req.ip
     });
 
-    const token = generateToken(user);
     res.json({
       success: true,
       data: {
-        user: {
-          id: user.id,
-          fullName: user.fullName,
-          email: user.email,
-          role: user.role,
-          tenantId: user.tenantId
-        },
-        token,
-        expiresIn: 86400
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        tenant: user.tenant,
+        token: generateToken(user.id)
       }
     });
 
@@ -229,7 +221,7 @@ exports.logout = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ['password_hash'] },
+      attributes: { exclude: ['password'] },
       include: [{ model: Tenant, as: 'tenant' }]
     });
     res.json({ success: true, data: user });

@@ -1,12 +1,12 @@
 CREATE TABLE IF NOT EXISTS "audit_logs" (
     "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "action" VARCHAR(255) NOT NULL,
-    "entityType" VARCHAR(255) NOT NULL,
-    "entityId" VARCHAR(255),
+    "entity_type" VARCHAR(255) NOT NULL,
+    "entity_id" VARCHAR(255),
     "details" JSONB,
-    "ipAddress" VARCHAR(255),
-    "tenantId" UUID REFERENCES "tenants" ("id") ON DELETE SET NULL,
-    "userId" UUID REFERENCES "users" ("id") ON DELETE SET NULL,
-    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    "ip_address" VARCHAR(255),
+    "tenant_id" UUID REFERENCES "tenants" ("id") ON DELETE SET NULL,
+    "user_id" UUID REFERENCES "users" ("id") ON DELETE SET NULL,
+    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

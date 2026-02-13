@@ -36,46 +36,14 @@ exports.createProject = async (req, res) => {
 
 exports.getProjects = async (req, res) => {
   try {
-    const { status, search, page = 1, limit = 20 } = req.query;
-    const offset = (page - 1) * limit;
-    
-    // Build where clause
-    const whereClause = { tenantId: req.user.tenantId };
-    if (status) whereClause.status = status;
-    if (search) {
-      whereClause.name = { [require('sequelize').Op.iLike]: `%${search}%` };
-    }
-
-    const { count, rows } = await Project.findAndCountAll({
-      where: whereClause,
+    const projects = await Project.findAll({
+      where: { tenantId: req.user.tenantId },
       include: [
-        { model: require('../models').User, as: 'creator', attributes: ['id', 'fullName'] },
-        { model: require('../models').Task, as: 'tasks' }
+        { model: User, as: 'creator', attributes: ['id', 'fullName'] }
       ],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
       order: [['createdAt', 'DESC']]
     });
-
-    // Count completed tasks for each project
-    const projects = rows.map(p => ({
-      ...p.toJSON(),
-      taskCount: p.tasks.length,
-      completedTaskCount: p.tasks.filter(t => t.status === 'completed').length
-    }));
-
-    res.json({ 
-      success: true, 
-      data: {
-        projects,
-        total: count,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(count / limit),
-          limit: parseInt(limit)
-        }
-      }
-    });
+    res.json({ success: true, data: projects });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -84,7 +52,7 @@ exports.getProjects = async (req, res) => {
 exports.getProject = async (req, res) => {
   try {
     const project = await Project.findOne({
-      where: { id: req.params.projectId, tenantId: req.user.tenantId },
+      where: { id: req.params.id, tenantId: req.user.tenantId },
       include: [
         { model: User, as: 'creator', attributes: ['id', 'fullName'] }
       ]
@@ -99,7 +67,7 @@ exports.getProject = async (req, res) => {
 exports.updateProject = async (req, res) => {
   try {
     const { name, description, status } = req.body;
-    const project = await Project.findOne({ where: { id: req.params.projectId, tenantId: req.user.tenantId }});
+    const project = await Project.findOne({ where: { id: req.params.id, tenantId: req.user.tenantId }});
 
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
 
@@ -122,7 +90,7 @@ exports.updateProject = async (req, res) => {
 exports.deleteProject = async (req, res) => {
   try {
     const project = await Project.findOne({ 
-      where: { id: req.params.projectId, tenantId: req.user.tenantId } 
+      where: { id: req.params.id, tenantId: req.user.tenantId } 
     });
 
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
@@ -132,7 +100,7 @@ exports.deleteProject = async (req, res) => {
     await AuditLog.create({
       action: 'DELETE_PROJECT',
       entityType: 'Project',
-      entityId: req.params.projectId,
+      entityId: req.params.id,
       tenantId: req.user.tenantId,
       userId: req.user.id
     });

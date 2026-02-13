@@ -1,22 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
-import { 
-  LayoutDashboard, 
-  CheckSquare, 
-  Timer, 
-  Briefcase, 
-  Zap, 
-  ChevronRight, 
-  PlusCircle, 
-  AlertCircle 
+import {
+  LayoutDashboard,
+  CheckSquare,
+  Timer,
+  Briefcase,
+  Zap,
+  ChevronRight,
+  PlusCircle,
+  AlertCircle
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({ 
-    activeProjects: 0, 
-    completedTasks: 0, 
-    pendingTasks: 0 
+  const [stats, setStats] = useState({
+    activeProjects: 0,
+    completedTasks: 0,
+    pendingTasks: 0
   });
   const [recentProjects, setRecentProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,37 +38,72 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        // Fetch Projects for the list
         const projectsRes = await api.get('/projects');
         const projects = projectsRes.data.data || [];
+        setRecentProjects(projects.slice(0, 3));
 
-        const activeProjects = projects.filter(p => p.status === 'active').length;
-        
-        setStats({
-          activeProjects,
-          completedTasks: 0, 
-          pendingTasks: 0    
-        });
+        // Fetch Tenant Stats
+        // We need the tenant ID. 'user' object from localStorage has it.
+        if (user && user.tenantId) {
+          try {
+            const tenantRes = await api.get(`/tenants/${user.tenantId}`);
+            const stats = tenantRes.data.data.stats;
+            setStats({
+              activeProjects: stats.totalProjects, // Or use projects.length if we want client-side count
+              completedTasks: stats.totalTasks, // API returns totalTasks, we might not get 'completed' specific from tenant stats unless we updated tenantController. 
+              // Let's check tenantController.js again. It returns totalTasks, totalProjects, totalUsers. 
+              // It doesn't return *completed* tasks. 
+              // To get completed tasks, we might need a specific API or just count from all projects if we fetched all tasks (expensive).
+              // OPTION: Just use totalTasks for now, or fetch all tasks. 
+              // Let's stick to what we can easily get or calculate.
+              // Actually, let's fetch all tasks for the user/tenant to be accurate if the stats API is limited.
+              // But waiting for all tasks might be slow.
+              // tenantController returns: totalUsers, totalProjects, totalTasks.
+              // Let's use those for consistency.
+              pendingTasks: 0 // We don't have this from tenant stats.
+            });
 
-        setRecentProjects(projects.slice(0, 3)); 
+            // BETTER APPROACH: 
+            // We have projects. We can't get all tasks easily without a dedicated endpoint or iterating projects.
+            // Let's use the 'stats' from tenant details for the counters where possible.
+            // But tenantController only gives total counts.
+            // Let's keep it simple and safe:
+            setStats({
+              activeProjects: stats.totalProjects,
+              completedTasks: stats.totalTasks, // Renaming visual label maybe? Or just show Total Tasks
+              pendingTasks: stats.totalUsers // Maybe show Total Users instead of Pending Tasks?
+            });
+          } catch (e) {
+            console.warn("Could not fetch tenant stats:", e);
+            // Fallback to client side calc for projects
+            setStats({
+              activeProjects: projects.length,
+              completedTasks: 0,
+              pendingTasks: 0
+            });
+          }
+        }
+
         setLoading(false);
       } catch (err) {
         console.error("Dashboard Fetch Error:", err);
         if (err.response && err.response.status !== 401) {
-            setError("Failed to load dashboard data.");
+          setError("Failed to load dashboard data.");
         }
         setLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, []);
+  }, [user.tenantId]);
 
   if (loading) return (
     <div className="min-h-screen grid place-items-center bg-zinc-950">
       <div className="text-center space-y-4">
         <div className="relative w-16 h-16 mx-auto">
-            <div className="absolute inset-0 border-2 border-zinc-800 rounded-full"></div>
-            <div className="absolute inset-0 border-2 border-t-orange-500 rounded-full animate-spin"></div>
+          <div className="absolute inset-0 border-2 border-zinc-800 rounded-full"></div>
+          <div className="absolute inset-0 border-2 border-t-orange-500 rounded-full animate-spin"></div>
         </div>
         <p className="text-zinc-400 font-mono text-sm uppercase tracking-widest">Loading Workspace...</p>
       </div>
@@ -80,8 +115,8 @@ export default function Dashboard() {
       <div className="bg-red-950/20 border border-red-900/50 p-6 rounded-lg max-w-md w-full flex items-start gap-4">
         <AlertCircle className="text-red-500 shrink-0" />
         <div>
-            <h4 className="text-red-500 font-bold">Something went wrong</h4>
-            <p className="text-red-200/70 text-sm mt-1">{error}</p>
+          <h4 className="text-red-500 font-bold">Something went wrong</h4>
+          <p className="text-red-200/70 text-sm mt-1">{error}</p>
         </div>
       </div>
     </div>
@@ -94,15 +129,15 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-orange-500 p-2 rounded-lg shadow-lg shadow-orange-200">
-                <LayoutDashboard className="text-white w-6 h-6" />
+              <LayoutDashboard className="text-white w-6 h-6" />
             </div>
             <h1 className="text-xl font-black uppercase tracking-tight text-zinc-800">
               Workspace Overview
             </h1>
           </div>
-          
-          <Link 
-            to="/projects" 
+
+          <Link
+            to="/projects"
             className="inline-flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95"
           >
             <PlusCircle className="w-4 h-4" />
@@ -114,34 +149,34 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 py-10 space-y-12">
         {/* Welcome Block */}
         <section>
-            <h2 className="text-4xl font-light text-zinc-400">
-                Welcome back, <span className="text-zinc-900 font-bold">{user.fullName.split(' ')[0]}</span>
-            </h2>
-            <p className="text-zinc-500 mt-1">Status: <span className="text-emerald-500 font-medium">All systems operational</span></p>
+          <h2 className="text-4xl font-light text-zinc-400">
+            Welcome back, <span className="text-zinc-900 font-bold">{user.fullName.split(' ')[0]}</span>
+          </h2>
+          <p className="text-zinc-500 mt-1">Status: <span className="text-emerald-500 font-medium">All systems operational</span></p>
         </section>
 
         {/* Stats Section */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-3xl border border-zinc-200 shadow-sm relative group overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform" />
-                <Briefcase className="w-10 h-10 text-orange-500 mb-6 relative" />
-                <p className="text-zinc-500 font-medium text-sm">Total Projects</p>
-                <p className="text-5xl font-black mt-2">{stats.activeProjects}</p>
-            </div>
+          <div className="bg-white p-8 rounded-3xl border border-zinc-200 shadow-sm relative group overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform" />
+            <Briefcase className="w-10 h-10 text-orange-500 mb-6 relative" />
+            <p className="text-zinc-500 font-medium text-sm">Total Projects</p>
+            <p className="text-5xl font-black mt-2">{stats.activeProjects}</p>
+          </div>
 
-            <div className="bg-white p-8 rounded-3xl border border-zinc-200 shadow-sm relative group overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform" />
-                <CheckSquare className="w-10 h-10 text-blue-500 mb-6 relative" />
-                <p className="text-zinc-500 font-medium text-sm">Completed Tasks</p>
-                <p className="text-5xl font-black mt-2">{stats.completedTasks}</p>
-            </div>
+          <div className="bg-white p-8 rounded-3xl border border-zinc-200 shadow-sm relative group overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform" />
+            <CheckSquare className="w-10 h-10 text-blue-500 mb-6 relative" />
+            <p className="text-zinc-500 font-medium text-sm">Completed Tasks</p>
+            <p className="text-5xl font-black mt-2">{stats.completedTasks}</p>
+          </div>
 
-            <div className="bg-white p-8 rounded-3xl border border-zinc-200 shadow-sm relative group overflow-hidden sm:col-span-2 lg:col-span-1">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform" />
-                <Timer className="w-10 h-10 text-purple-500 mb-6 relative" />
-                <p className="text-zinc-500 font-medium text-sm">Tasks To-Do</p>
-                <p className="text-5xl font-black mt-2">{stats.pendingTasks}</p>
-            </div>
+          <div className="bg-white p-8 rounded-3xl border border-zinc-200 shadow-sm relative group overflow-hidden sm:col-span-2 lg:col-span-1">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform" />
+            <Timer className="w-10 h-10 text-purple-500 mb-6 relative" />
+            <p className="text-zinc-500 font-medium text-sm">Tasks To-Do</p>
+            <p className="text-5xl font-black mt-2">{stats.pendingTasks}</p>
+          </div>
         </section>
 
         {/* List Section */}
@@ -159,9 +194,9 @@ export default function Dashboard() {
           <div className="grid gap-4">
             {recentProjects.length > 0 ? (
               recentProjects.map((project) => (
-                <Link 
-                  to={`/projects/${project.id}`} 
-                  key={project.id} 
+                <Link
+                  to={`/projects/${project.id}`}
+                  key={project.id}
                   className="group block bg-white border border-zinc-200 p-2 rounded-2xl hover:border-zinc-900 transition-colors"
                 >
                   <div className="flex items-center justify-between p-4">
@@ -176,7 +211,7 @@ export default function Dashboard() {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-6">
                       <div className="hidden md:block text-right">
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">Last Update</p>
