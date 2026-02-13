@@ -14,3 +14,6 @@ CREATE TABLE IF NOT EXISTS "tasks" (
     "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS "tasks_tenant_id_idx" ON "tasks" ("tenant_id");
+CREATE INDEX IF NOT EXISTS "tasks_project_id_idx" ON "tasks" ("project_id");
