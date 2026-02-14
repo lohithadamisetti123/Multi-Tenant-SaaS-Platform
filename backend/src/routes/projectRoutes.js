@@ -9,12 +9,12 @@ router.use(protect);
 
 router.post('/', projectController.createProject);
 router.get('/', projectController.getProjects);
-router.get('/:projectId', projectController.getProject);
-router.put('/:projectId', projectController.updateProject);
-router.delete('/:projectId', projectController.deleteProject);
+router.get('/:id', projectController.getProject);
+router.put('/:id', projectController.updateProject);
+router.delete('/:id', projectController.deleteProject);
 
 // Nested task routes under projects (per spec)
-router.post('/:projectId/tasks', taskController.createTask);
-router.get('/:projectId/tasks', taskController.getTasks);
+router.post('/:id/tasks', taskController.createTask);
+router.get('/:id/tasks', taskController.getTasks);
 
 module.exports = router;

@@ -72,6 +72,7 @@ exports.getProject = async (req, res) => {
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
     res.json({ success: true, data: project });
   } catch (error) {
+    console.error('Error in getProject:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -13,7 +13,9 @@ const seed = async () => {
       defaults: {
         name: 'Demo Company',
         subscriptionPlan: 'pro',
-        status: 'active'
+        status: 'active',
+        maxUsers: 10,
+        maxProjects: 10
       }
     });
     console.log('✅ Tenant Created:', tenant.name);

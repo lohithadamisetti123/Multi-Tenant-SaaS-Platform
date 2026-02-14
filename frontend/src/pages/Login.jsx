@@ -2,27 +2,28 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 import toast from 'react-hot-toast';
-import { 
-  ShieldCheck, 
-  KeyRound, 
-  AtSign, 
-  Globe, 
-  ChevronRight, 
-  CircleDashed, 
-  Fingerprint 
+import {
+  ShieldCheck,
+  KeyRound,
+  AtSign,
+  Globe,
+  ChevronRight,
+  CircleDashed,
+  Fingerprint
 } from 'lucide-react';
 
 export default function Login() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    tenantSubdomain: '' 
+    tenantSubdomain: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const value = e.target.name === 'tenantSubdomain' ? e.target.value.toLowerCase().replace(/\s+/g, '-') : e.target.value;
+    setFormData({ ...formData, [e.target.name]: value });
   };
 
   const handleSubmit = async (e) => {
@@ -44,14 +45,14 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 selection:bg-orange-500/30 selection:text-orange-500">
-      
+
       {/* Structural Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-orange-600/10 blur-[120px] rounded-full"></div>
       </div>
 
       <div className="w-full max-w-[1100px] grid lg:grid-cols-2 bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl relative z-10">
-        
+
         {/* Visual Brand Side */}
         <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-zinc-800 to-zinc-900 border-r border-zinc-800">
           <div className="flex items-center gap-2">
@@ -63,7 +64,7 @@ export default function Login() {
 
           <div>
             <h1 className="text-5xl font-black text-white leading-tight">
-              Secure <br /> 
+              Secure <br />
               <span className="text-zinc-500 italic font-light">Workspace</span>
             </h1>
             <p className="mt-6 text-zinc-400 max-w-sm leading-relaxed">
@@ -87,7 +88,7 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            
+
             <div className="space-y-2 group">
               <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">
                 Workspace Name
@@ -162,16 +163,16 @@ export default function Login() {
               <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">New here?</span>
               <div className="h-px flex-1 bg-zinc-800"></div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
-              <Link 
-                to="/register" 
+              <Link
+                to="/register"
                 className="py-3 px-4 border border-zinc-800 rounded-xl text-center text-xs font-bold text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all"
               >
                 Join Team
               </Link>
-              <Link 
-                to="/register-tenant" 
+              <Link
+                to="/register-tenant"
                 className="py-3 px-4 border border-zinc-800 rounded-xl text-center text-xs font-bold text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all"
               >
                 Register Org
